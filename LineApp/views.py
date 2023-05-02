@@ -16,14 +16,14 @@ from LineApp.utils.auth import auth
 #########################################################################
 
 def home(request):
-    return HttpResponse("<h1>Working</h1>")
+    return JsonResponse({'status': 'you got correct server for line'})
 
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
         try:
-            userName = request.POST.get('userName')
-            password = request.POST.get('password')
+            userName = json.loads(request.body).get('userName')
+            password = json.loads(request.body).get('password')
         except:
             return JsonResponse({'status': 'no data in post req'})
 
@@ -73,8 +73,8 @@ def protected(request):
 def joinqueue(request):
     if request.method == 'POST':
         try:
-            creatorid = request.POST.get('creatorID')
-            queuename = request.POST.get('queueName')
+            creatorid = json.loads(request.body).get("creatorID")
+            queuename = json.loads(request.body).get("queueName")
         except:
             return JsonResponse({'status': 'no data in post req'})
         
@@ -84,15 +84,16 @@ def joinqueue(request):
         elif(status == 0):
             return JsonResponse({'status': 'Invalid JWT token'})
         else:
-            USER.objects.filter(username=status)[0].joinQueue(creatorid,queuename)
+            USER.objects.filter(username=status)[0].joinQueue(creatorID1=creatorid,queueName1=queuename)
+            print(creatorid+" "+queuename)
             return JsonResponse({'status': 'joined !'})
 
 @csrf_exempt
 def exitqueue(request):
     if request.method == 'POST':
         try:
-            creatorid = request.POST.get('creatorID')
-            queuename = request.POST.get('queueName')
+            creatorid = json.loads(request.body).get('creatorID')
+            queuename = json.loads(request.body).get('queueName')
         except:
             return JsonResponse({'status': 'no data in post req'})
         
@@ -111,6 +112,7 @@ def exitqueue(request):
 @csrf_exempt
 def myjoinedqueue(request):
     status = auth(request)
+    print(status)
     if(status == -1):
         return JsonResponse({'status': 'Invalid Authorization header'})
     elif(status == 0):
@@ -118,16 +120,16 @@ def myjoinedqueue(request):
     else:
         me = USER.objects.filter(username=status)[0]
         joinedQueuesList = me.getJoinedQueues()
-        return JsonResponse({'status': joinedQueuesList})
+        return JsonResponse({'status': "ok", 'lst':joinedQueuesList})
 
 @csrf_exempt
 def createqueue(request):
     if request.method == 'POST':
         try:
-            queueName = request.POST.get('queueName')
-            location = request.POST.get('location')
-            time = request.POST.get('time')
-            note = request.POST.get('note')
+            queueName = json.loads(request.body).get('queueName')
+            location = json.loads(request.body).get('location')
+            time = json.loads(request.body).get('time')
+            note = json.loads(request.body).get('note')
         except:
             return JsonResponse({'status': 'no data in post req'})
 
@@ -150,13 +152,13 @@ def myqueue(request):
     else:
         me = USER.objects.filter(username=status)[0]
         myQueueList = me.getMyQueues()
-        return JsonResponse({'status': myQueueList})
+        return JsonResponse({'status': 'ok', 'lst':myQueueList})
 
 @csrf_exempt
 def deletequeue(request):
     if request.method == 'POST':
         try:
-            queuename = request.POST.get('queueName')
+            queuename = json.loads(request.body).get('queueName')
         except:
             return JsonResponse({'status': 'no data in post req'})
         
@@ -184,8 +186,11 @@ def deletequeue(request):
 def customerpanel(request):
     if request.method == 'POST':
         try:
-            creatorid = request.POST.get('creatorID')
-            queuename = request.POST.get('queueName')
+            creatorid = json.loads(request.body).get('creatorID')
+            queuename = json.loads(request.body).get('queueName')
+            
+            if(creatorid==None or queuename==None):
+                JsonResponse({'status': 'no data in post req'})
         except:
             return JsonResponse({'status': 'no data in post req'})
         
@@ -210,7 +215,8 @@ def customerpanel(request):
                     "speed":str(float(speed)/60.0)+" min/person",
                     "estTime": str(((float(index)-1.0)*float(speed))/60.0)+" min"
                 }
-                return JsonResponse({'status': data})
+                print(data)
+                return JsonResponse({'status': "ok", 'data':data})
             else:
                 return JsonResponse({'status': "queue you specified does not exist"}) 
 
@@ -218,7 +224,10 @@ def customerpanel(request):
 def adminpanel(request):
     if request.method == 'POST':
         try:
-            queuename = request.POST.get('queueName')
+            queuename = json.loads(request.body).get('queueName')
+            
+            if(queuename==None):
+                JsonResponse({'status': 'no data in post req'})
         except:
             return JsonResponse({'status': 'no data in post req'})
         
@@ -239,9 +248,10 @@ def adminpanel(request):
                 data = {
                     "length":q.len(),
                     "first":first,
-                    "speed":str(float(q.getSpeed())/60.0)+" min/person"
+                    "speed":str(float(q.getSpeed())/60.0)+" min/person",
+                    "estTimeToEmpty": str(float(q.len())*float(q.getSpeed()))
                 }
-                return JsonResponse({'status': data})
+                return JsonResponse({'status': "ok", 'data':data})
             else:
                 return JsonResponse({'status': "queue you specified does not exist"})
 
@@ -249,7 +259,10 @@ def adminpanel(request):
 def pop(request):
     if request.method == 'POST':
         try:
-            queuename = request.POST.get('queueName')
+            queuename = json.loads(request.body).get('queueName')
+            
+            if(queuename==None):
+                JsonResponse({'status': 'no data in post req'})
         except:
             return JsonResponse({'status': 'no data in post req'})
         
@@ -262,7 +275,7 @@ def pop(request):
             if(USER.objects.filter(username=status).exists() == True):
                 u = USER.objects.filter(username=status)[0]
                 poppedPerson = u.pop(queuename)
-                return JsonResponse({'status': poppedPerson+" work done"})
+                return JsonResponse({'status': "work done"})
             else:
                 return JsonResponse({'status': 'user doesnt exist'})
 
@@ -270,8 +283,8 @@ def pop(request):
 def deletepersonfromqueue(request):
     if request.method == 'POST':
         try:
-            queuename = request.POST.get('queueName')
-            userid = request.POST.get("userID")
+            queuename = json.loads(request.body).get('queueName')
+            userid = json.loads(request.body).get("userID")
         except:
             return JsonResponse({'status': 'no data in post req'})
         
