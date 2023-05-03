@@ -24,10 +24,14 @@ def login(request):
         try:
             userName = json.loads(request.body).get('userName')
             password = json.loads(request.body).get('password')
+            # userName = request.POST.get('userName')
+            # password = request.POST.get('password')
         except:
             return JsonResponse({'status': 'no data in post req'})
 
         queryObj = USER.objects.filter(username=userName, password=password)
+        print(userName)
+        print(password)
 
         if(queryObj.exists() == True):  
             payload = {
@@ -35,7 +39,7 @@ def login(request):
             }
             token = jwt.encode(payload, 'vivekkey', algorithm='HS256')
             print("token sent "+token)
-            return JsonResponse({'token': token})
+            return JsonResponse({'status':"ok",'token': token})
         else:
             return JsonResponse({'status': 'Invalid credentials'})
     return JsonResponse({'status': 'check your method'})
