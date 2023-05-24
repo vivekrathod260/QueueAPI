@@ -176,11 +176,11 @@ def deletequeue(request):
 
                 res = USER.objects.filter(username=status)[0].deleteQueue(queuename)
                 if res==0:
-                    return JsonResponse({'cannot delete Queue'})
+                    return JsonResponse({'status': 'cannot delete Queue'})
                 elif res ==-1:
-                    return JsonResponse({'can not delete queue as queue you specified does not exist'})
+                    return JsonResponse({'status': 'can not delete queue as queue you specified does not exist'})
                 elif res ==-2:
-                    return JsonResponse({'cannot delete as queue does not exitst'})
+                    return JsonResponse({'status': 'cannot delete as queue does not exitst'})
                 else:
                     return JsonResponse({'status': 'queue deleted !'})
             else:
@@ -192,7 +192,6 @@ def customerpanel(request):
         try:
             creatorid = json.loads(request.body).get('creatorID')
             queuename = json.loads(request.body).get('queueName')
-            
             if(creatorid==None or queuename==None):
                 JsonResponse({'status': 'no data in post req'})
         except:
@@ -253,7 +252,7 @@ def adminpanel(request):
                     "length":q.len(),
                     "first":first,
                     "speed":str(float(q.getSpeed())/60.0)+" min/person",
-                    "estTimeToEmpty": str(float(q.len())*float(q.getSpeed()))
+                    "estTimeToEmpty": str(float(q.len())*float(q.getSpeed())/float(60))
                 }
                 return JsonResponse({'status': "ok", 'data':data})
             else:
